@@ -1,0 +1,892 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Codeloop — Learn to code, free & unlimited</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/material-darker.min.css">
+<style>
+  :root{
+    --bg:#0c1015; --panel:#12171f; --panel-2:#0f141b; --raised:#1a212c;
+    --border:#222c38; --border-soft:#1a222c;
+    --text:#e7eef6; --muted:#8a97a7; --faint:#5a6573;
+    --accent:#a3e635; --accent-deep:#7bb918; --accent-dim:rgba(163,230,53,.13);
+    --amber:#fbbf24; --blue:#5aa9ff; --red:#ff7a7a; --ok:#46c463;
+    --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+    --disp:"Space Grotesk",system-ui,sans-serif;
+    --ui:"Inter",system-ui,-apple-system,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--ui);font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased;overflow:hidden}
+  ::selection{background:var(--accent-dim)}
+  button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+  button:focus-visible,a:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+  code{font-family:var(--mono)}
+  #app{display:flex;flex-direction:column;height:100dvh}
+
+  .topbar{display:flex;align-items:center;gap:14px;height:56px;flex:0 0 56px;padding:0 16px;background:linear-gradient(180deg,#11161e,#0e131a);border-bottom:1px solid var(--border)}
+  .nav-toggle{display:none;font-size:20px;width:38px;height:38px;border-radius:9px}
+  .nav-toggle:hover{background:var(--raised)}
+  .brand{display:flex;align-items:center;gap:10px;font-family:var(--disp);font-weight:700;font-size:18px;letter-spacing:-.01em}
+  .brand .mark{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;background:var(--accent);color:#0a0d11;font-weight:700;font-size:15px;font-family:var(--mono);box-shadow:0 0 0 1px rgba(163,230,53,.4),0 6px 18px -6px var(--accent)}
+  .brand .mark::after{content:"{ }"}
+  .brand .loop{color:var(--accent)}
+  .stats{margin-left:auto;display:flex;align-items:center;gap:9px}
+  .stat{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:13px;font-weight:500;background:var(--raised);padding:6px 11px;border-radius:999px;border:1px solid var(--border-soft)}
+  .stat.xp b{color:var(--accent)} .stat.combo b{color:var(--amber)}
+  .profile-chip{display:flex;align-items:center;gap:7px;background:var(--raised);border:1px solid var(--border-soft);padding:5px 12px 5px 6px;border-radius:999px;font-weight:600;font-size:13px;transition:.12s}
+  .profile-chip:hover{border-color:var(--accent)}
+  .profile-chip .av{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,var(--accent),#d6f56b);color:#0a0d11;font-weight:700;font-size:12px;font-family:var(--disp)}
+
+  .body{flex:1;display:flex;min-height:0}
+  .sidebar{flex:0 0 282px;width:282px;background:var(--panel-2);border-right:1px solid var(--border);display:flex;flex-direction:column;min-height:0}
+  .course-head{padding:14px 16px 12px;border-bottom:1px solid var(--border-soft)}
+  .seg{display:flex;gap:4px;background:var(--raised);padding:4px;border-radius:11px}
+  .seg.lang{margin-bottom:9px;flex-wrap:wrap}
+  .seg button{flex:1 1 0;min-width:0;padding:7px 5px;border-radius:8px;font-family:var(--disp);font-weight:600;font-size:12.5px;color:var(--muted);display:flex;align-items:center;justify-content:center;gap:5px;transition:.12s;white-space:nowrap}
+  .seg button.active{background:var(--accent);color:#0a0d11}
+  .seg button:not(.active):hover{color:var(--text)}
+  .seg.level{margin-bottom:12px}
+  .seg.level button{font-size:11.5px;padding:6px 4px}
+  .course-eyebrow{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);font-weight:600}
+  .course-title{font-family:var(--disp);font-size:17px;font-weight:600;margin:3px 0 11px}
+  .progress{height:7px;border-radius:99px;background:var(--raised);overflow:hidden}
+  .progress > i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--accent-deep),var(--accent));transition:width .5s cubic-bezier(.2,.8,.2,1)}
+  .progress-label{margin-top:7px;font-size:12px;color:var(--muted);font-family:var(--mono)}
+  .progress-label b{color:var(--text)}
+  .tree{flex:1;overflow-y:auto;padding:4px 10px 22px}
+  .sec{margin-top:14px}
+  .sec-name{display:flex;align-items:center;gap:8px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);font-weight:600;padding:6px 8px}
+  .sec-name .n{width:18px;height:18px;border-radius:5px;background:var(--raised);display:grid;place-items:center;font-family:var(--mono);font-size:11px;color:var(--muted)}
+  .lrow{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:9px;cursor:pointer;color:var(--muted);font-size:13.5px;font-weight:500;transition:background .12s,color .12s}
+  .lrow:hover{background:var(--raised);color:var(--text)}
+  .lrow.active{background:var(--accent-dim);color:var(--text)}
+  .lrow.active .dot{border-color:var(--accent)}
+  .dot{flex:0 0 18px;width:18px;height:18px;border-radius:50%;border:2px solid var(--border);display:grid;place-items:center;font-size:11px;transition:.15s}
+  .lrow.done .dot{background:var(--accent);border-color:var(--accent);color:#0a0d11}
+  .lrow.done .dot::after{content:"✓";font-weight:700}
+  .lrow .t{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+  .main{flex:1;display:flex;min-width:0}
+  .lesson-pane{flex:0 0 44%;max-width:560px;min-width:330px;display:flex;flex-direction:column;background:var(--panel);border-right:1px solid var(--border);min-height:0}
+  .lesson-scroll{flex:1;overflow-y:auto;padding:24px 30px 28px}
+  .lesson-meta{font-size:12px;font-family:var(--mono);color:var(--faint);letter-spacing:.02em}
+  .lesson-meta b{color:var(--accent)}
+  .lvl-pill{display:inline-block;font-size:10px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;padding:2px 7px;border-radius:99px;margin-left:6px;vertical-align:middle}
+  .lvl-beginner{background:rgba(70,196,99,.16);color:#7ee29a}
+  .lvl-intermediate{background:rgba(90,169,255,.16);color:#8ec5ff}
+  .lvl-advanced{background:rgba(251,191,36,.16);color:#fbbf24}
+  h1.lesson-title{font-family:var(--disp);font-size:25px;font-weight:600;letter-spacing:-.02em;margin:7px 0 16px;line-height:1.2}
+  .concept{color:#cdd6e0;font-size:14.5px}
+  .concept p{margin:0 0 13px}
+  .concept code{background:var(--raised);padding:2px 6px;border-radius:5px;font-size:12.5px;color:#dbe9c4;border:1px solid var(--border-soft)}
+  .ex{background:var(--panel-2);border:1px solid var(--border);border-radius:10px;margin:0 0 14px;overflow:hidden}
+  .ex .ex-label{display:block;font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);padding:8px 12px 0}
+  .ex pre{margin:0;padding:6px 14px 13px;font-family:var(--mono);font-size:13px;color:#e7eef6;white-space:pre-wrap;line-height:1.5}
+  .ex pre .o{color:var(--faint)}
+  .challenge{margin:22px 0 6px;border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:10px;background:linear-gradient(90deg,var(--accent-dim),transparent 70%);padding:14px 16px}
+  .challenge .ctitle{font-family:var(--disp);font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);margin-bottom:5px;display:flex;align-items:center;gap:7px}
+  .challenge .task{color:#dfe7f0;font-size:14.5px}
+  .challenge .task code{background:rgba(255,255,255,.06)}
+  details.solution{margin:16px 0 4px;border:1px solid var(--border);border-radius:10px;background:var(--panel-2)}
+  details.solution summary{list-style:none;cursor:pointer;padding:11px 14px;font-size:13px;font-weight:600;color:var(--muted);display:flex;align-items:center;gap:8px}
+  details.solution summary::-webkit-details-marker{display:none}
+  details.solution summary:hover{color:var(--text)}
+  details.solution summary .chev{transition:.2s;color:var(--faint)}
+  details.solution[open] summary .chev{transform:rotate(90deg)}
+  details.solution .sol-note{font-size:11.5px;color:var(--faint);font-weight:400;margin-left:auto}
+  details.solution pre{margin:0;padding:0 14px 14px;font-family:var(--mono);font-size:13px;color:#dbe9c4;white-space:pre-wrap}
+  .ai{margin-top:22px;border:1px solid var(--border);border-radius:12px;background:var(--panel-2);overflow:hidden}
+  .ai-head{display:flex;align-items:center;gap:9px;padding:12px 15px;border-bottom:1px solid var(--border-soft)}
+  .ai-head .orb{width:22px;height:22px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#d6f56b,var(--accent-deep));box-shadow:0 0 12px -2px var(--accent)}
+  .ai-head .ttl{font-family:var(--disp);font-weight:600;font-size:14px}
+  .ai-head .sub{font-size:11px;color:var(--faint);margin-left:auto}
+  .ai-body{padding:13px 15px}
+  .ai-actions{display:flex;gap:8px;flex-wrap:wrap}
+  .btn-ghost{background:var(--raised);border:1px solid var(--border);padding:8px 13px;border-radius:9px;font-size:13px;font-weight:600;color:var(--text);transition:.12s}
+  .btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
+  .ai-out{margin-top:12px;font-size:13.5px;color:#d3dce6;white-space:pre-wrap;line-height:1.55;display:none}
+  .ai-out.show{display:block}
+  .ai-out.tip{border-left:2px solid var(--amber);padding-left:12px}
+  .ai-thinking{display:flex;gap:5px;align-items:center;color:var(--muted);font-size:13px}
+  .ai-thinking i{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:blink 1.2s infinite both}
+  .ai-thinking i:nth-child(2){animation-delay:.2s}.ai-thinking i:nth-child(3){animation-delay:.4s}
+  @keyframes blink{0%,80%,100%{opacity:.2}40%{opacity:1}}
+  .ai-ask{display:flex;gap:8px;margin-top:12px}
+  .ai-ask input{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:9px;padding:9px 12px;color:var(--text);font-family:inherit;font-size:13px}
+  .ai-ask input::placeholder{color:var(--faint)}
+  .ai-ask button{flex:0 0 auto;background:var(--accent);color:#0a0d11;font-weight:600;padding:9px 15px;border-radius:9px;font-size:13px}
+  .ai-ask button:hover{background:#b6f04a}
+  .lesson-foot{flex:0 0 auto;display:flex;gap:10px;padding:13px 22px;border-top:1px solid var(--border);background:var(--panel)}
+  .lesson-foot button{flex:1;padding:11px;border-radius:10px;font-weight:600;font-size:14px;transition:.12s}
+  #prevBtn{background:var(--raised);border:1px solid var(--border);color:var(--muted)}
+  #prevBtn:hover:not(:disabled){color:var(--text)} #prevBtn:disabled{opacity:.4;cursor:not-allowed}
+  #nextBtn{background:var(--raised);border:1px solid var(--border);color:var(--text)}
+  #nextBtn.ready{background:var(--accent);color:#0a0d11;border-color:var(--accent);box-shadow:0 0 22px -6px var(--accent)}
+  #nextBtn.ready:hover{background:#b6f04a}
+
+  .editor-pane{flex:1;display:flex;flex-direction:column;min-width:0;background:var(--panel-2)}
+  .editor-bar{display:flex;align-items:center;gap:10px;height:46px;flex:0 0 46px;padding:0 14px;border-bottom:1px solid var(--border);background:var(--panel)}
+  .filetab{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:13px;color:var(--muted)}
+  .filetab .py{width:9px;height:9px;border-radius:50%;background:var(--accent)}
+  .editor-bar .spacer{flex:1}
+  .ebtn{padding:7px 13px;border-radius:8px;font-size:13px;font-weight:600;transition:.12s}
+  #resetBtn{color:var(--muted)}#resetBtn:hover{color:var(--text);background:var(--raised)}
+  #runBtn{background:var(--accent);color:#0a0d11;display:flex;align-items:center;gap:6px}
+  #runBtn:hover{background:#b6f04a} #runBtn:disabled{opacity:.55;cursor:wait}
+  .editor-wrap{flex:1;min-height:0;position:relative}
+  .CodeMirror{height:100%!important;font-family:var(--mono)!important;font-size:14px!important;background:var(--panel-2)!important;line-height:1.6!important}
+  .CodeMirror-gutters{background:var(--panel-2)!important;border-right:1px solid var(--border-soft)!important}
+  .CodeMirror-linenumber{color:#3c4654!important}
+  .CodeMirror-cursor{border-left:1.5px solid var(--accent)!important}
+  .CodeMirror-selected{background:rgba(163,230,53,.12)!important}
+  .console-bar{display:flex;align-items:center;gap:10px;height:38px;flex:0 0 38px;padding:0 14px;border-top:1px solid var(--border);background:var(--panel);font-family:var(--mono);font-size:12px;color:var(--muted)}
+  .console-bar .dotg{width:7px;height:7px;border-radius:50%;background:var(--faint)}
+  .live-tag{font-size:10px;color:var(--accent);border:1px solid var(--accent-dim);background:var(--accent-dim);padding:1px 7px;border-radius:99px}
+  .check-badge{margin-left:auto;font-weight:600;font-size:12px;padding:3px 10px;border-radius:99px;display:none}
+  .check-badge.pass{display:inline-block;color:#0a0d11;background:var(--ok)}
+  .check-badge.fail{display:inline-block;color:#0a0d11;background:var(--amber)}
+  .panel-wrap{flex:0 0 42%;min-height:150px;display:flex;flex-direction:column;min-height:0}
+  .console{flex:1;overflow-y:auto;padding:12px 16px;font-family:var(--mono);font-size:13px;line-height:1.6;background:var(--bg);white-space:pre-wrap}
+  .console .muted{color:var(--faint)} .console .err{color:var(--red)} .console .ok{color:var(--accent);font-weight:600}
+  .console .sys{color:var(--blue)} .console .want{color:var(--amber)}
+  .preview{flex:1;display:flex;flex-direction:column;min-height:0;background:#fff}
+  .html-feedback{display:none;font-family:var(--mono);font-size:12.5px;color:#0a0d11;background:var(--amber);padding:8px 14px}
+  .html-feedback.show{display:block}
+  .preview iframe{flex:1;width:100%;border:none;background:#fff}
+
+  .toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,80px);background:var(--ok);color:#08110a;font-weight:700;padding:12px 22px;border-radius:12px;font-size:15px;box-shadow:0 18px 40px -12px rgba(0,0,0,.6);opacity:0;transition:.35s cubic-bezier(.2,.9,.2,1);z-index:60;display:flex;align-items:center;gap:9px}
+  .toast.show{transform:translate(-50%,0);opacity:1}
+
+  /* profile overlay */
+  .overlay{position:fixed;inset:0;z-index:80;display:none;place-items:center;background:rgba(8,11,15,.86);backdrop-filter:blur(4px)}
+  .overlay.show{display:grid}
+  .signin{width:min(420px,92vw);background:var(--panel);border:1px solid var(--border);border-radius:18px;padding:28px;box-shadow:0 30px 80px -20px rgba(0,0,0,.7)}
+  .signin .logo{display:flex;align-items:center;gap:10px;font-family:var(--disp);font-weight:700;font-size:20px;margin-bottom:4px}
+  .signin .logo .mark{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;background:var(--accent);color:#0a0d11;font-family:var(--mono);font-weight:700}
+  .signin .logo .mark::after{content:"{ }"}
+  .signin h2{font-family:var(--disp);font-size:18px;margin:14px 0 4px}
+  .signin p{color:var(--muted);font-size:13.5px;margin:0 0 16px}
+  .profile-list{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+  .profile-list button{display:flex;align-items:center;gap:8px;background:var(--raised);border:1px solid var(--border);padding:8px 12px;border-radius:10px;font-weight:600;font-size:13.5px;transition:.12s}
+  .profile-list button:hover{border-color:var(--accent);color:var(--accent)}
+  .profile-list button .av{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,var(--accent),#d6f56b);color:#0a0d11;font-weight:700;font-size:11px}
+  .profile-list button .x{margin-left:2px;color:var(--faint);font-weight:700}
+  .profile-list button .x:hover{color:var(--red)}
+  .signin .newrow{display:flex;gap:8px}
+  .signin input{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:11px 13px;color:var(--text);font-family:inherit;font-size:14px}
+  .signin input::placeholder{color:var(--faint)}
+  .signin .go{flex:0 0 auto;background:var(--accent);color:#0a0d11;font-weight:700;padding:11px 18px;border-radius:10px}
+  .signin .go:hover{background:#b6f04a}
+  .signin .foot{display:flex;justify-content:space-between;align-items:center;margin-top:16px;font-size:12.5px;color:var(--faint)}
+  .signin .foot a{color:var(--muted);cursor:pointer;text-decoration:underline}
+
+  .scrim{display:none}
+  @media (max-width:1080px){ .lesson-pane{flex-basis:50%} }
+  @media (max-width:860px){
+    .nav-toggle{display:grid;place-items:center}
+    .sidebar{position:fixed;z-index:40;top:56px;bottom:0;left:0;transform:translateX(-100%);transition:transform .25s;box-shadow:0 0 60px rgba(0,0,0,.5)}
+    .sidebar.open{transform:none}
+    .scrim{display:block;position:fixed;inset:56px 0 0 0;background:rgba(0,0,0,.5);z-index:39;opacity:0;pointer-events:none;transition:.25s}
+    .scrim.show{opacity:1;pointer-events:auto}
+    .main{flex-direction:column}
+    .lesson-pane{flex:0 0 auto;max-width:none;min-width:0;max-height:48%;border-right:none;border-bottom:1px solid var(--border)}
+    .editor-pane{flex:1}
+    .stat.combo{display:none}
+  }
+  ::-webkit-scrollbar{width:10px;height:10px}
+  ::-webkit-scrollbar-thumb{background:#222c38;border-radius:99px;border:3px solid transparent;background-clip:padding-box}
+  ::-webkit-scrollbar-thumb:hover{background:#30404f;border:3px solid transparent;background-clip:padding-box}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="topbar">
+    <button class="nav-toggle" id="navToggle" aria-label="Toggle menu">☰</button>
+    <div class="brand"><span class="mark" aria-hidden="true"></span><span>Code<span class="loop">loop</span></span></div>
+    <div class="stats">
+      <div class="stat xp" title="Experience points"><span>⚡</span><b id="xp">0</b><span>XP</span></div>
+      <div class="stat combo" title="Pass lessons in a row to build a combo. Revealing a solution resets it."><span>🔥</span><b id="combo">0</b></div>
+      <button class="profile-chip" id="profileChip" title="Switch profile"><span class="av" id="avatar">?</span><span id="chipName">Sign in</span></button>
+    </div>
+  </header>
+  <div class="body">
+    <aside class="sidebar" id="sidebar">
+      <div class="course-head">
+        <div class="seg lang" id="langSwitch"></div>
+        <div class="seg level" id="levelSwitch">
+          <button data-level="beginner" class="active">Beginner</button>
+          <button data-level="intermediate">Intermediate</button>
+          <button data-level="advanced">Advanced</button>
+        </div>
+        <div class="course-eyebrow">Course</div>
+        <div class="course-title" id="courseTitle"></div>
+        <div class="progress"><i id="progFill"></i></div>
+        <div class="progress-label"><b id="doneCount">0</b> / <span id="totalCount">0</span> in this level</div>
+      </div>
+      <nav class="tree" id="tree" aria-label="Lessons"></nav>
+    </aside>
+    <div class="scrim" id="scrim"></div>
+    <main class="main">
+      <section class="lesson-pane">
+        <div class="lesson-scroll" id="lessonScroll">
+          <div class="lesson-meta"><b id="metaIdx">Lesson 1</b> · <span id="metaSec"></span><span class="lvl-pill" id="lvlPill"></span></div>
+          <h1 class="lesson-title" id="lessonTitle"></h1>
+          <div class="concept" id="concept"></div>
+          <div class="challenge"><div class="ctitle">▸ Your challenge</div><div class="task" id="task"></div></div>
+          <details class="solution" id="solBox"><summary><span class="chev">▸</span> Show solution <span class="sol-note">resets your 🔥 combo</span></summary><pre id="solution"></pre></details>
+          <div class="ai">
+            <div class="ai-head"><span class="orb" aria-hidden="true"></span><span class="ttl">AI tutor</span><span class="sub">unlimited</span></div>
+            <div class="ai-body">
+              <div class="ai-actions"><button class="btn-ghost" id="hintBtn">💡 Get a hint</button><button class="btn-ghost" id="explainBtn">📖 Explain this lesson</button></div>
+              <div class="ai-out" id="aiOut"></div>
+              <div class="ai-ask"><input id="aiInput" placeholder="Ask the tutor anything…" autocomplete="off"><button id="askBtn">Ask</button></div>
+            </div>
+          </div>
+        </div>
+        <div class="lesson-foot"><button id="prevBtn">← Back</button><button id="nextBtn">Next →</button></div>
+      </section>
+      <section class="editor-pane">
+        <div class="editor-bar"><span class="filetab"><span class="py"></span><span id="fileName">main.py</span></span><span class="spacer"></span><button class="ebtn" id="resetBtn">↺ Reset</button><button class="ebtn" id="runBtn">▸ Run</button></div>
+        <div class="editor-wrap"><textarea id="code"></textarea></div>
+        <div class="console-bar"><span class="dotg"></span><span id="panelLabel">Console</span><span class="live-tag" id="liveTag" style="display:none">live</span><span class="check-badge" id="checkBadge"></span></div>
+        <div class="panel-wrap">
+          <div class="console" id="console"><span class="muted">▸ Run your code to see the output here.</span></div>
+          <div class="preview" id="preview" style="display:none"><div class="html-feedback" id="htmlFeedback"></div><iframe id="frame" title="Live preview"></iframe></div>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<div class="overlay" id="overlay">
+  <div class="signin">
+    <div class="logo"><span class="mark"></span>Code<span class="loop" style="color:var(--accent)">loop</span></div>
+    <h2>Who's learning?</h2>
+    <p>Pick a profile or make a new one. Each profile saves its own XP and progress in this browser.</p>
+    <div class="profile-list" id="profileList"></div>
+    <div class="newrow"><input id="newName" placeholder="New username…" maxlength="20" autocomplete="off"><button class="go" id="newGo">Start</button></div>
+    <div class="foot"><span id="signedHint"></span><a id="closeOverlay" style="display:none">Cancel</a></div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/xml/xml.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/css/css.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+
+<script>
+/* ===== AI TUTOR ENDPOINT =====================================
+   Leave blank to call Anthropic directly (works only inside the
+   Claude preview). To make the tutor work on your published site,
+   deploy ai-proxy.worker.js and paste its URL here, e.g.
+   const AI_PROXY_URL = "https://codeloop-ai.yourname.workers.dev";
+   ============================================================ */
+const AI_PROXY_URL = "";
+
+/* =========================================================================
+   CONTENT — all lessons are original. runner: py | js | html | css
+   ========================================================================= */
+const T = el => el ? el.textContent.replace(/\s+/g," ").trim() : "";
+
+/* ---------------- PYTHON ---------------- */
+const PY = [
+ {level:"beginner",sec:"First steps",title:"Say hello",
+  concept:`<p><code>print()</code> shows whatever you put in its parentheses. Text goes inside quotes — a <code>string</code>.</p><div class="ex"><span class="ex-label">Example</span><pre>print("Coding is fun")</pre></div>`,
+  task:`Print the exact text: <code>Hello, world!</code>`,starter:`# Write your code below\n`,expected:`Hello, world!`,
+  failHint:`Match it exactly, including the comma and !, wrapped in quotes inside print().`,solution:`print("Hello, world!")`},
+ {level:"beginner",sec:"First steps",title:"Store a value",
+  concept:`<p>A <code>variable</code> is a labelled box for a value: <code>name = value</code>.</p><div class="ex"><span class="ex-label">Example</span><pre>lives = 3
+print(lives)</pre></div>`,
+  task:`Create <code>score</code> set to <code>100</code>, then print it.`,starter:`# create the variable then print it\n`,expected:`100`,test:`assert score == 100`,
+  failHint:`score = 100 then print(score). No quotes — 100 is a number.`,solution:`score = 100\nprint(score)`},
+ {level:"beginner",sec:"First steps",title:"Text & f-strings",
+  concept:`<p>Put an <code>f</code> before the quote and wrap a variable in <code>{ }</code> to drop it into text.</p><div class="ex"><span class="ex-label">Example</span><pre>city = "Tokyo"
+print(f"I live in {city}")</pre></div>`,
+  task:`Set <code>name = "Ada"</code> and print <code>Hi, Ada!</code> using an f-string.`,starter:`name = "Ada"\n# print the greeting\n`,expected:`Hi, Ada!`,
+  failHint:`print(f"Hi, {name}!")`,solution:`name = "Ada"\nprint(f"Hi, {name}!")`},
+ {level:"beginner",sec:"First steps",title:"Numbers & math",
+  concept:`<p>Arithmetic uses <code>+ - * /</code>, plus <code>**</code> (power) and <code>%</code> (remainder).</p><div class="ex"><span class="ex-label">Example</span><pre>print(2 ** 5)   <span class="o"># 32</span></pre></div>`,
+  task:`A room is <code>8</code> by <code>5</code>. Print its area.`,starter:`# print the area\n`,expected:`40`,
+  failHint:`Print 8 * 5, which is 40.`,solution:`print(8 * 5)`},
+ {level:"beginner",sec:"First steps",title:"True or false",
+  concept:`<p>Comparisons give a <code>boolean</code>: <code>True</code> or <code>False</code>. Use <code>== &lt; &gt; &gt;= &lt;= !=</code>.</p>`,
+  task:`Set <code>age = 20</code> and print the result of <code>age &gt;= 18</code>.`,starter:`age = 20\n# print whether age is at least 18\n`,expected:`True`,
+  failHint:`print(age >= 18) — Python turns it into True/False.`,solution:`age = 20\nprint(age >= 18)`},
+ {level:"beginner",sec:"First steps",title:"if / else",
+  concept:`<p><code>if</code> runs when a condition is true, else the <code>else</code> block. Indentation marks the block.</p><div class="ex"><span class="ex-label">Example</span><pre>if hour < 12:
+    print("Morning")
+else:
+    print("Afternoon")</pre></div>`,
+  task:`<code>temp = 30</code> is set. Print <code>Hot</code> if &gt; 25 else <code>Mild</code>.`,starter:`temp = 30\n`,expected:`Hot`,
+  failHint:`if temp > 25: print("Hot") else: print("Mild"). Indent under each branch.`,solution:`temp = 30\nif temp > 25:\n    print("Hot")\nelse:\n    print("Mild")`},
+ {level:"beginner",sec:"First steps",title:"Lists",
+  concept:`<p>A <code>list</code> holds items in order. Reach one by <code>index</code>, starting at <code>0</code>.</p><div class="ex"><span class="ex-label">Example</span><pre>c = ["red","green","blue"]
+print(c[2])   <span class="o"># blue</span></pre></div>`,
+  task:`Make <code>fruits</code> = apple, banana, cherry. Print the <strong>second</strong> item.`,starter:`fruits = ["apple", "banana", "cherry"]\n`,expected:`banana`,test:`assert fruits[1]=="banana"`,
+  failHint:`Index 1 is the second item: print(fruits[1]).`,solution:`fruits = ["apple", "banana", "cherry"]\nprint(fruits[1])`},
+ {level:"beginner",sec:"First steps",title:"for loops",
+  concept:`<p>A <code>for</code> loop repeats over a sequence. <code>range(1,6)</code> gives 1..5 (stops before 6).</p>`,
+  task:`Print numbers <code>1</code> to <code>5</code>, each on its own line.`,starter:`# loop 1 to 5\n`,expected:`1\n2\n3\n4\n5`,
+  failHint:`for n in range(1, 6): print(n)`,solution:`for n in range(1, 6):\n    print(n)`},
+ {level:"intermediate",sec:"Going further",title:"while loops",
+  concept:`<p>A <code>while</code> loop runs until its condition is false. Change a variable inside so it stops.</p>`,
+  task:`Count <strong>down</strong> from <code>3</code> to <code>1</code>, one per line.`,starter:`n = 3\n`,expected:`3\n2\n1`,
+  failHint:`while n >= 1: print(n); n = n - 1`,solution:`n = 3\nwhile n >= 1:\n    print(n)\n    n = n - 1`},
+ {level:"intermediate",sec:"Going further",title:"Dictionaries",
+  concept:`<p>A <code>dictionary</code> stores values under named keys: <code>{"key": value}</code>.</p>`,
+  task:`<code>user = {"name":"Sam","level":4}</code>. Print the value of <code>"level"</code>.`,starter:`user = {"name": "Sam", "level": 4}\n`,expected:`4`,
+  failHint:`print(user["level"])`,solution:`user = {"name": "Sam", "level": 4}\nprint(user["level"])`},
+ {level:"intermediate",sec:"Going further",title:"Functions",
+  concept:`<p>Define reusable code with <code>def</code> and hand back a value with <code>return</code>.</p><div class="ex"><span class="ex-label">Example</span><pre>def double(x):
+    return x * 2</pre></div>`,
+  task:`Write <code>greet(name)</code> returning <code>Hello, </code>+name. Print <code>greet("Sky")</code>.`,starter:`def greet(name):\n    pass\n\nprint(greet("Sky"))\n`,expected:`Hello, Sky`,test:`assert greet("Max")=="Hello, Max"`,
+  failHint:`return f"Hello, {name}" (return, not print).`,solution:`def greet(name):\n    return f"Hello, {name}"\n\nprint(greet("Sky"))`},
+ {level:"intermediate",sec:"Going further",title:"String methods",
+  concept:`<p>Strings have built-in tools: <code>.upper()</code>, <code>.lower()</code>, <code>.replace(a,b)</code>, <code>len(s)</code>.</p>`,
+  task:`<code>word = "python"</code>. Print it in UPPERCASE.`,starter:`word = "python"\n`,expected:`PYTHON`,
+  failHint:`print(word.upper())`,solution:`word = "python"\nprint(word.upper())`},
+ {level:"advanced",sec:"Mastery",title:"List comprehension",
+  concept:`<p>Build a list in one line: <code>[expr for x in seq]</code>.</p><div class="ex"><span class="ex-label">Example</span><pre>[n*n for n in range(3)]  <span class="o"># [0,1,4]</span></pre></div>`,
+  task:`Print a list of the squares of <code>1..5</code>: <code>[1, 4, 9, 16, 25]</code>.`,starter:`# build and print the list\n`,expected:`[1, 4, 9, 16, 25]`,
+  failHint:`print([n*n for n in range(1, 6)])`,solution:`print([n*n for n in range(1, 6)])`},
+ {level:"advanced",sec:"Mastery",title:"Project: FizzBuzz",
+  concept:`<p>Combine loops, conditions and <code>%</code>. Multiples of 3 → Fizz, of 5 → Buzz, of both → FizzBuzz. Check "both" first!</p>`,
+  task:`Print <code>1</code> to <code>15</code> applying the FizzBuzz rules, one per line.`,starter:`for n in range(1, 16):\n    pass\n`,
+  expected:`1\n2\nFizz\n4\nBuzz\nFizz\n7\n8\nFizz\nBuzz\n11\nFizz\n13\n14\nFizzBuzz`,
+  failHint:`Check n%3==0 and n%5==0 first, then 3, then 5, else print n.`,
+  solution:`for n in range(1, 16):\n    if n % 3 == 0 and n % 5 == 0:\n        print("FizzBuzz")\n    elif n % 3 == 0:\n        print("Fizz")\n    elif n % 5 == 0:\n        print("Buzz")\n    else:\n        print(n)`}
+];
+
+/* ---------------- JAVASCRIPT ---------------- */
+const JS = [
+ {level:"beginner",sec:"First steps",title:"Console output",
+  concept:`<p><code>console.log()</code> prints to the console. Text goes in quotes; statements end with <code>;</code>.</p><div class="ex"><span class="ex-label">Example</span><pre>console.log("Hi there");</pre></div>`,
+  task:`Log the exact text: <code>Hello, world!</code>`,starter:`// write your code below\n`,expected:`Hello, world!`,
+  failHint:`console.log("Hello, world!"); — match the text exactly.`,solution:`console.log("Hello, world!");`},
+ {level:"beginner",sec:"First steps",title:"Variables",
+  concept:`<p>Use <code>let</code> for values that change and <code>const</code> for ones that don't.</p><div class="ex"><span class="ex-label">Example</span><pre>const lives = 3;
+console.log(lives);</pre></div>`,
+  task:`Make a const <code>score</code> = <code>100</code> and log it.`,starter:`// create score then log it\n`,expected:`100`,mustInclude:["score"],
+  failHint:`const score = 100; console.log(score);`,solution:`const score = 100;\nconsole.log(score);`},
+ {level:"beginner",sec:"First steps",title:"Template strings",
+  concept:`<p>Backticks let you drop variables into text with <code>${'${...}'}</code>.</p><div class="ex"><span class="ex-label">Example</span><pre>const c = "Tokyo";
+console.log(\`I live in \${c}\`);</pre></div>`,
+  task:`Set <code>name = "Ada"</code> and log <code>Hi, Ada!</code> using a template string.`,starter:`const name = "Ada";\n`,expected:`Hi, Ada!`,
+  failHint:"console.log(`Hi, ${name}!`); — use backticks, not normal quotes.",solution:"const name = \"Ada\";\nconsole.log(`Hi, ${name}!`);"},
+ {level:"beginner",sec:"First steps",title:"Numbers & math",
+  concept:`<p>Math uses <code>+ - * /</code>, plus <code>**</code> (power) and <code>%</code> (remainder).</p>`,
+  task:`Log the area of an <code>8</code> by <code>5</code> room.`,starter:`// log the area\n`,expected:`40`,
+  failHint:`console.log(8 * 5);`,solution:`console.log(8 * 5);`},
+ {level:"beginner",sec:"First steps",title:"True or false",
+  concept:`<p>Comparisons give <code>true</code>/<code>false</code>. Use <code>===</code> to test equality (three equals).</p>`,
+  task:`Set <code>age = 20</code> and log <code>age &gt;= 18</code>.`,starter:`const age = 20;\n`,expected:`true`,
+  failHint:`console.log(age >= 18);`,solution:`const age = 20;\nconsole.log(age >= 18);`},
+ {level:"beginner",sec:"First steps",title:"if / else",
+  concept:`<p>Conditions go in parentheses; blocks go in <code>{ }</code>.</p><div class="ex"><span class="ex-label">Example</span><pre>if (hour < 12) {
+  console.log("Morning");
+} else {
+  console.log("Afternoon");
+}</pre></div>`,
+  task:`<code>temp = 30</code>. Log <code>Hot</code> if &gt; 25, else <code>Mild</code>.`,starter:`const temp = 30;\n`,expected:`Hot`,
+  failHint:`if (temp > 25) { console.log("Hot"); } else { console.log("Mild"); }`,solution:`const temp = 30;\nif (temp > 25) {\n  console.log("Hot");\n} else {\n  console.log("Mild");\n}`},
+ {level:"beginner",sec:"First steps",title:"Arrays",
+  concept:`<p>An <code>array</code> holds items in order; reach one by index from <code>0</code>.</p><div class="ex"><span class="ex-label">Example</span><pre>const c = ["red","green","blue"];
+console.log(c[2]); <span class="o">// blue</span></pre></div>`,
+  task:`Make <code>fruits</code> = apple, banana, cherry and log the <strong>second</strong>.`,starter:`const fruits = ["apple", "banana", "cherry"];\n`,expected:`banana`,
+  failHint:`console.log(fruits[1]);`,solution:`const fruits = ["apple", "banana", "cherry"];\nconsole.log(fruits[1]);`},
+ {level:"beginner",sec:"First steps",title:"for loops",
+  concept:`<p>A classic loop: start, condition, step.</p><div class="ex"><span class="ex-label">Example</span><pre>for (let i = 1; i <= 3; i++) {
+  console.log(i);
+}</pre></div>`,
+  task:`Log numbers <code>1</code> to <code>5</code>, each on its own line.`,starter:`// loop 1 to 5\n`,expected:`1\n2\n3\n4\n5`,
+  failHint:`for (let i = 1; i <= 5; i++) console.log(i);`,solution:`for (let i = 1; i <= 5; i++) {\n  console.log(i);\n}`},
+ {level:"intermediate",sec:"Going further",title:"Functions",
+  concept:`<p>Functions package reusable code. Arrow form: <code>const f = (x) =&gt; x * 2;</code></p>`,
+  task:`Write <code>greet(name)</code> returning <code>Hello, </code>+name. Log <code>greet("Sky")</code>.`,starter:`function greet(name) {\n  // return the greeting\n}\nconsole.log(greet("Sky"));\n`,expected:`Hello, Sky`,
+  failHint:"return `Hello, ${name}`; inside the function.",solution:"function greet(name) {\n  return `Hello, ${name}`;\n}\nconsole.log(greet(\"Sky\"));"},
+ {level:"intermediate",sec:"Going further",title:"Objects",
+  concept:`<p>Objects store named values: <code>{ key: value }</code>. Read with <code>obj.key</code>.</p>`,
+  task:`<code>user = {name:"Sam", level:4}</code>. Log the <code>level</code>.`,starter:`const user = { name: "Sam", level: 4 };\n`,expected:`4`,
+  failHint:`console.log(user.level);`,solution:`const user = { name: "Sam", level: 4 };\nconsole.log(user.level);`},
+ {level:"intermediate",sec:"Going further",title:"Array .map()",
+  concept:`<p><code>.map()</code> makes a new array by transforming each item.</p><div class="ex"><span class="ex-label">Example</span><pre>[1,2,3].map(n => n * 10)
+<span class="o">// [10, 20, 30]</span></pre></div>`,
+  task:`From <code>[1,2,3,4]</code>, log a new array of each number doubled: <code>[2,4,6,8]</code>.`,starter:`const nums = [1, 2, 3, 4];\n`,expected:`[2,4,6,8]`,mustInclude:["map"],
+  failHint:`console.log(nums.map(n => n * 2)); — the checker compares the array values.`,solution:`const nums = [1, 2, 3, 4];\nconsole.log(nums.map(n => n * 2));`},
+ {level:"intermediate",sec:"Going further",title:"while loops",
+  concept:`<p>Repeats while a condition holds. Change something inside so it ends.</p>`,
+  task:`Count <strong>down</strong> from <code>3</code> to <code>1</code>, one per line.`,starter:`let n = 3;\n`,expected:`3\n2\n1`,
+  failHint:`while (n >= 1) { console.log(n); n--; }`,solution:`let n = 3;\nwhile (n >= 1) {\n  console.log(n);\n  n--;\n}`},
+ {level:"advanced",sec:"Mastery",title:"Project: FizzBuzz",
+  concept:`<p>Loops + conditions + <code>%</code>. Multiples of 3 → Fizz, 5 → Buzz, both → FizzBuzz. Check "both" first.</p>`,
+  task:`Log <code>1</code> to <code>15</code> with the FizzBuzz rules, one per line.`,starter:`for (let n = 1; n <= 15; n++) {\n\n}\n`,
+  expected:`1\n2\nFizz\n4\nBuzz\nFizz\n7\n8\nFizz\nBuzz\n11\nFizz\n13\n14\nFizzBuzz`,
+  failHint:`Check n%3===0 && n%5===0 first, then 3, then 5, else log n.`,
+  solution:`for (let n = 1; n <= 15; n++) {\n  if (n % 3 === 0 && n % 5 === 0) console.log("FizzBuzz");\n  else if (n % 3 === 0) console.log("Fizz");\n  else if (n % 5 === 0) console.log("Buzz");\n  else console.log(n);\n}`},
+ {level:"advanced",sec:"Mastery",title:"Mini game: dice roller",
+  concept:`<p>A taste of game logic. <code>Math.floor(Math.random()*6)+1</code> gives a dice roll 1–6. We'll make it predictable for checking by summing fixed rolls instead.</p>`,
+  task:`You rolled <code>[3, 5, 2, 6]</code>. Log the total score (the sum).`,starter:`const rolls = [3, 5, 2, 6];\nlet total = 0;\n// add up the rolls, then log total\n`,expected:`16`,
+  failHint:`Loop the rolls adding to total (total += r), or use rolls.reduce((a,b)=>a+b,0). Log total — it's 16.`,
+  solution:`const rolls = [3, 5, 2, 6];\nlet total = 0;\nfor (const r of rolls) {\n  total += r;\n}\nconsole.log(total);`}
+];
+
+/* ---------------- HTML ---------------- */
+const HTML = [
+ {level:"beginner",sec:"Structure basics",title:"Headings",
+  concept:`<p>Tags wrap content: <code>&lt;h1&gt; ... &lt;/h1&gt;</code>. Headings go <code>&lt;h1&gt;</code> (biggest) to <code>&lt;h6&gt;</code>.</p>`,
+  task:`Create an <code>&lt;h1&gt;</code> that says <code>My Web Page</code>.`,starter:`<!-- write HTML below -->\n`,solution:`<h1>My Web Page</h1>`,
+  failHint:`Wrap the text in <h1> ... </h1>, reading exactly: My Web Page`,check:b=>!!b.querySelector("h1")&&T(b.querySelector("h1"))==="My Web Page"},
+ {level:"beginner",sec:"Structure basics",title:"Paragraphs",
+  concept:`<p>Body text uses <code>&lt;p&gt;</code> tags.</p>`,
+  task:`Add an <code>&lt;h1&gt;</code> saying <code>About Me</code>, then a <code>&lt;p&gt;</code> with any sentence.`,starter:`<h1>About Me</h1>\n`,solution:`<h1>About Me</h1>\n<p>I am learning to build web pages.</p>`,
+  failHint:`Keep the h1 and add a <p> with some non-empty text.`,check:b=>{const h=b.querySelector("h1"),p=b.querySelector("p");return !!h&&T(h)==="About Me"&&!!p&&T(p).length>0;}},
+ {level:"beginner",sec:"Structure basics",title:"Bold & emphasis",
+  concept:`<p><code>&lt;strong&gt;</code> bolds important text; <code>&lt;em&gt;</code> italicises. They nest inside other text.</p>`,
+  task:`Write a <code>&lt;p&gt;</code> with the word <code>important</code> wrapped in <code>&lt;strong&gt;</code>.`,starter:`<p>This message is  here.</p>\n`,solution:`<p>This is <strong>important</strong>.</p>`,
+  failHint:`Inside a <p>, write <strong>important</strong>.`,check:b=>{const p=b.querySelector("p"),s=b.querySelector("strong");return !!p&&!!s&&T(s).toLowerCase().includes("important");}},
+ {level:"beginner",sec:"Structure basics",title:"Links",
+  concept:`<p>A link is <code>&lt;a href="url"&gt;text&lt;/a&gt;</code>. <code>href</code> is an attribute — extra info in the tag.</p>`,
+  task:`Make a link <code>Visit Wikipedia</code> pointing to <code>https://wikipedia.org</code>.`,starter:`<!-- your link -->\n`,solution:`<a href="https://wikipedia.org">Visit Wikipedia</a>`,
+  failHint:`<a href="https://wikipedia.org">Visit Wikipedia</a>`,check:b=>{const a=b.querySelector("a"),h=a&&a.getAttribute("href");return !!a&&(h==="https://wikipedia.org"||h==="https://wikipedia.org/")&&T(a)==="Visit Wikipedia";}},
+ {level:"beginner",sec:"Structure basics",title:"Bulleted lists",
+  concept:`<p><code>&lt;ul&gt;</code> is a bulleted list of <code>&lt;li&gt;</code> items.</p>`,
+  task:`Make a <code>&lt;ul&gt;</code> with three items, in order: <code>Coffee</code>, <code>Tea</code>, <code>Juice</code>.`,starter:`<ul>\n\n</ul>\n`,solution:`<ul>\n  <li>Coffee</li>\n  <li>Tea</li>\n  <li>Juice</li>\n</ul>`,
+  failHint:`Three <li> items inside <ul>: Coffee, Tea, Juice.`,check:b=>{const ul=b.querySelector("ul"),li=ul?[...ul.querySelectorAll("li")]:[];return !!ul&&li.length===3&&li.map(T).join("|")==="Coffee|Tea|Juice";}},
+ {level:"beginner",sec:"Structure basics",title:"Images",
+  concept:`<p><code>&lt;img&gt;</code> has no closing tag. <code>src</code> = the file, <code>alt</code> = a text description.</p>`,
+  task:`Add an image with <code>src="cat.jpg"</code> and <code>alt="A cat"</code>. <span style="opacity:.7">(The file won't exist — seeing the alt text is fine.)</span>`,starter:`<!-- your image -->\n`,solution:`<img src="cat.jpg" alt="A cat">`,
+  failHint:`<img src="cat.jpg" alt="A cat">`,check:b=>{const i=b.querySelector("img");return !!i&&i.getAttribute("src")==="cat.jpg"&&i.getAttribute("alt")==="A cat";}},
+ {level:"beginner",sec:"Structure basics",title:"Numbered lists",
+  concept:`<p><code>&lt;ol&gt;</code> numbers each <code>&lt;li&gt;</code> for you.</p>`,
+  task:`Create an <code>&lt;ol&gt;</code> of steps: <code>Wake up</code>, <code>Code</code>, <code>Sleep</code>.`,starter:`<ol>\n\n</ol>\n`,solution:`<ol>\n  <li>Wake up</li>\n  <li>Code</li>\n  <li>Sleep</li>\n</ol>`,
+  failHint:`Three <li> items inside <ol>: Wake up, Code, Sleep.`,check:b=>{const ol=b.querySelector("ol"),li=ol?[...ol.querySelectorAll("li")]:[];return !!ol&&li.length===3&&li.map(T).join("|")==="Wake up|Code|Sleep";}},
+ {level:"beginner",sec:"Structure basics",title:"Divs & classes",
+  concept:`<p>A <code>&lt;div&gt;</code> groups elements. A <code>class</code> names it for styling.</p>`,
+  task:`Create a <code>&lt;div class="card"&gt;</code> containing an <code>&lt;h2&gt;</code> saying <code>Profile</code>.`,starter:`<!-- build the card -->\n`,solution:`<div class="card">\n  <h2>Profile</h2>\n</div>`,
+  failHint:`<div class="card"> with an <h2>Profile</h2> inside.`,check:b=>{const d=b.querySelector("div.card"),h=d&&d.querySelector("h2");return !!d&&!!h&&T(h)==="Profile";}},
+ {level:"intermediate",sec:"Interactive & data",title:"A simple form",
+  concept:`<p><code>&lt;input&gt;</code> is a box (its <code>placeholder</code> is the hint text); <code>&lt;button&gt;</code> is clickable.</p>`,
+  task:`Add an <code>&lt;input&gt;</code> with placeholder <code>Your name</code> and a <code>&lt;button&gt;</code> saying <code>Submit</code>.`,starter:`<!-- input + button -->\n`,solution:`<input type="text" placeholder="Your name">\n<button>Submit</button>`,
+  failHint:`Input needs placeholder="Your name"; button text exactly Submit.`,check:b=>{const i=b.querySelector("input"),btn=b.querySelector("button");return !!i&&i.getAttribute("placeholder")==="Your name"&&!!btn&&T(btn)==="Submit";}},
+ {level:"intermediate",sec:"Interactive & data",title:"Tables",
+  concept:`<p>A table is <code>&lt;table&gt;</code> with rows <code>&lt;tr&gt;</code> and cells <code>&lt;td&gt;</code>.</p><div class="ex"><span class="ex-label">Example</span><pre>&lt;table&gt;
+  &lt;tr&gt;&lt;td&gt;A&lt;/td&gt;&lt;td&gt;B&lt;/td&gt;&lt;/tr&gt;
+&lt;/table&gt;</pre></div>`,
+  task:`Make a <code>&lt;table&gt;</code> with one <code>&lt;tr&gt;</code> containing two <code>&lt;td&gt;</code> cells: <code>Name</code> and <code>Age</code>.`,starter:`<table>\n\n</table>\n`,solution:`<table>\n  <tr>\n    <td>Name</td>\n    <td>Age</td>\n  </tr>\n</table>`,
+  failHint:`Inside <table>, one <tr> with two <td>: Name and Age.`,check:b=>{const t=b.querySelector("table"),tds=t?[...t.querySelectorAll("tr td")]:[];return !!t&&tds.length===2&&tds.map(T).join("|")==="Name|Age";}},
+ {level:"intermediate",sec:"Interactive & data",title:"IDs & sections",
+  concept:`<p>An <code>id</code> uniquely names one element (used for links and styling). <code>&lt;section&gt;</code> groups related content meaningfully.</p>`,
+  task:`Create a <code>&lt;section id="intro"&gt;</code> containing a <code>&lt;p&gt;</code> with any text.`,starter:`<!-- section with id -->\n`,solution:`<section id="intro">\n  <p>Welcome to my page.</p>\n</section>`,
+  failHint:`<section id="intro"> with a <p> inside.`,check:b=>{const s=b.querySelector("section#intro"),p=s&&s.querySelector("p");return !!s&&!!p&&T(p).length>0;}},
+ {level:"advanced",sec:"Build something",title:"Project: profile card",
+  concept:`<p>Combine it all into one small component — the kind real sites are built from.</p>`,
+  task:`Build <code>&lt;div class="card"&gt;</code> with an <code>&lt;h1&gt;</code> name, a <code>&lt;p&gt;</code> bio, and a <code>&lt;ul&gt;</code> of 2+ hobbies.`,starter:`<div class="card">\n\n</div>\n`,solution:`<div class="card">\n  <h1>Alex Rivera</h1>\n  <p>A curious beginner building for the web.</p>\n  <ul>\n    <li>Reading</li>\n    <li>Hiking</li>\n  </ul>\n</div>`,
+  failHint:`Inside div.card: a non-empty h1, a non-empty p, and a ul with 2+ li.`,check:b=>{const d=b.querySelector("div.card");if(!d)return false;const h=d.querySelector("h1"),p=d.querySelector("p"),li=d.querySelectorAll("ul li");return !!h&&T(h).length>0&&!!p&&T(p).length>0&&li.length>=2;}}
+];
+
+/* ---------------- CSS ---------------- */
+const cs = (w,el,prop)=>w.getComputedStyle(el)[prop];
+const CSS = [
+ {level:"beginner",sec:"Color & text",title:"Text color",
+  concept:`<p>CSS styles HTML. A rule is <code>selector { property: value; }</code>. <code>.msg</code> targets <code>class="msg"</code>.</p><div class="ex"><span class="ex-label">Example</span><pre>p { color: blue; }</pre></div>`,
+  task:`Make the <code>.msg</code> text <code>red</code>.`,scaffold:`<p class="msg">Style me!</p>`,starter:`.msg {\n  \n}\n`,solution:`.msg {\n  color: red;\n}`,
+  failHint:`.msg { color: red; }`,check:(d,w)=>cs(w,d.querySelector(".msg"),"color")==="rgb(255, 0, 0)"},
+ {level:"beginner",sec:"Color & text",title:"Font size",
+  concept:`<p><code>font-size</code> sets text size, usually in <code>px</code>.</p>`,
+  task:`Make the <code>h1</code> font size <code>40px</code>.`,scaffold:`<h1>Big title</h1>`,starter:`h1 {\n  \n}\n`,solution:`h1 {\n  font-size: 40px;\n}`,
+  failHint:`h1 { font-size: 40px; }`,check:(d,w)=>cs(w,d.querySelector("h1"),"fontSize")==="40px"},
+ {level:"beginner",sec:"Color & text",title:"Text align",
+  concept:`<p><code>text-align</code> positions text: <code>left</code>, <code>center</code>, or <code>right</code>.</p>`,
+  task:`Center the text in <code>.box</code>.`,scaffold:`<div class="box">Centered?</div>`,starter:`.box {\n  \n}\n`,solution:`.box {\n  text-align: center;\n}`,
+  failHint:`.box { text-align: center; }`,check:(d,w)=>cs(w,d.querySelector(".box"),"textAlign")==="center"},
+ {level:"beginner",sec:"Color & text",title:"Background color",
+  concept:`<p><code>background-color</code> fills an element's background.</p>`,
+  task:`Give <code>.card</code> a <code>background-color</code> of <code>#222222</code>.`,scaffold:`<div class="card">Card</div>`,starter:`.card {\n  \n}\n`,solution:`.card {\n  background-color: #222222;\n}`,
+  failHint:`.card { background-color: #222222; }`,check:(d,w)=>cs(w,d.querySelector(".card"),"backgroundColor")==="rgb(34, 34, 34)"},
+ {level:"beginner",sec:"Box model",title:"Padding",
+  concept:`<p><code>padding</code> adds space <em>inside</em> an element, between its edge and content.</p>`,
+  task:`Give <code>.card</code> a <code>padding</code> of <code>20px</code>.`,scaffold:`<div class="card">Roomy</div>`,starter:`.card {\n  \n}\n`,solution:`.card {\n  padding: 20px;\n}`,
+  failHint:`.card { padding: 20px; }`,check:(d,w)=>cs(w,d.querySelector(".card"),"paddingTop")==="20px"},
+ {level:"beginner",sec:"Box model",title:"Border",
+  concept:`<p><code>border</code> draws a line around an element: <code>width style color</code>.</p><div class="ex"><span class="ex-label">Example</span><pre>border: 2px solid black;</pre></div>`,
+  task:`Give <code>.card</code> a border: <code>3px solid black</code>.`,scaffold:`<div class="card">Boxed</div>`,starter:`.card {\n  \n}\n`,solution:`.card {\n  border: 3px solid black;\n}`,
+  failHint:`.card { border: 3px solid black; }`,check:(d,w)=>cs(w,d.querySelector(".card"),"borderTopStyle")==="solid"&&cs(w,d.querySelector(".card"),"borderTopWidth")==="3px"},
+ {level:"beginner",sec:"Box model",title:"Width",
+  concept:`<p><code>width</code> sets how wide an element is.</p>`,
+  task:`Make <code>.card</code> exactly <code>200px</code> wide.`,scaffold:`<div class="card">Fixed width</div>`,starter:`.card {\n  \n}\n`,solution:`.card {\n  width: 200px;\n}`,
+  failHint:`.card { width: 200px; }`,check:(d,w)=>cs(w,d.querySelector(".card"),"width")==="200px"},
+ {level:"intermediate",sec:"Layout",title:"Flexbox row",
+  concept:`<p><code>display: flex</code> lays children out in a row and unlocks alignment tools.</p>`,
+  task:`Set <code>.row</code> to <code>display: flex</code>.`,scaffold:`<div class="row"><span>A</span><span>B</span></div>`,starter:`.row {\n  \n}\n`,solution:`.row {\n  display: flex;\n}`,
+  failHint:`.row { display: flex; }`,check:(d,w)=>cs(w,d.querySelector(".row"),"display")==="flex"},
+ {level:"intermediate",sec:"Layout",title:"Center with flex",
+  concept:`<p>On a flex container, <code>justify-content: center</code> centers children horizontally.</p>`,
+  task:`Make <code>.row</code> a flex container <em>and</em> center its items (<code>justify-content: center</code>).`,scaffold:`<div class="row"><span>Centered</span></div>`,starter:`.row {\n  \n}\n`,solution:`.row {\n  display: flex;\n  justify-content: center;\n}`,
+  failHint:`Set both display: flex; and justify-content: center;`,check:(d,w)=>cs(w,d.querySelector(".row"),"display")==="flex"&&cs(w,d.querySelector(".row"),"justifyContent")==="center"},
+ {level:"intermediate",sec:"Layout",title:"Rounded corners",
+  concept:`<p><code>border-radius</code> rounds an element's corners.</p>`,
+  task:`Give <code>.card</code> a <code>border-radius</code> of <code>12px</code>.`,scaffold:`<div class="card">Rounded</div>`,starter:`.card {\n  \n}\n`,solution:`.card {\n  border-radius: 12px;\n}`,
+  failHint:`.card { border-radius: 12px; }`,check:(d,w)=>cs(w,d.querySelector(".card"),"borderTopLeftRadius")==="12px"},
+ {level:"intermediate",sec:"Layout",title:"Box shadow",
+  concept:`<p><code>box-shadow</code> adds depth: <code>x y blur color</code>.</p><div class="ex"><span class="ex-label">Example</span><pre>box-shadow: 0 4px 12px gray;</pre></div>`,
+  task:`Give <code>.card</code> any <code>box-shadow</code>.`,scaffold:`<div class="card">Floating</div>`,starter:`.card {\n  \n}\n`,solution:`.card {\n  box-shadow: 0 6px 18px gray;\n}`,
+  failHint:`Add a box-shadow, e.g. box-shadow: 0 6px 18px gray;`,check:(d,w)=>{const v=cs(w,d.querySelector(".card"),"boxShadow");return !!v&&v!=="none";}},
+ {level:"advanced",sec:"Build something",title:"Project: style a button",
+  concept:`<p>Combine several properties into one polished component.</p>`,
+  task:`Style <code>.btn</code>: <code>background-color</code> <code>#a3e635</code>, white-ish text isn't needed — set <code>color: #0a0d11</code>, <code>padding: 12px</code>, <code>border-radius: 10px</code>, and remove the border (<code>border: none</code>).`,scaffold:`<button class="btn">Click me</button>`,starter:`.btn {\n  \n}\n`,
+  solution:`.btn {\n  background-color: #a3e635;\n  color: #0a0d11;\n  padding: 12px;\n  border-radius: 10px;\n  border: none;\n}`,
+  failHint:`Set background-color #a3e635, color #0a0d11, padding 12px, border-radius 10px, border none.`,
+  check:(d,w)=>{const e=d.querySelector(".btn");return cs(w,e,"backgroundColor")==="rgb(163, 230, 53)"&&cs(w,e,"color")==="rgb(10, 13, 17)"&&cs(w,e,"paddingTop")==="12px"&&cs(w,e,"borderTopLeftRadius")==="10px"&&cs(w,e,"borderTopStyle")==="none";}}
+];
+
+const COURSES = {
+  python:     { name:"Python",     file:"main.py",    runner:"py",   icon:"🐍", lessons:PY },
+  javascript: { name:"JavaScript", file:"app.js",     runner:"js",   icon:"𝐉𝐒", lessons:JS },
+  html:       { name:"HTML",       file:"index.html", runner:"html", icon:"🌐", lessons:HTML },
+  css:        { name:"CSS",        file:"style.css",  runner:"css",  icon:"🎨", lessons:CSS }
+};
+const LANG_ORDER = ["python","javascript","html","css"];
+const LEVELS = ["beginner","intermediate","advanced"];
+
+/* =========================================================================
+   PROFILES + STATE  (saved per-username in localStorage)
+   ========================================================================= */
+const LS_PROFILES="codeloop_profiles", LS_CURRENT="codeloop_current";
+const dataKey = u => "codeloop_data_"+u;
+let currentUser = null;
+
+function getProfiles(){ try{ return JSON.parse(localStorage.getItem(LS_PROFILES)||"[]"); }catch(e){ return []; } }
+function setProfiles(list){ try{ localStorage.setItem(LS_PROFILES, JSON.stringify(list)); }catch(e){} }
+
+const state = {};
+function resetState(){
+  state.lang="python"; state.level="beginner";
+  state.currentByLang={python:0,javascript:0,html:0,css:0};
+  state.completed=new Set(); state.xp=0; state.combo=0; state.userCode={};
+}
+function loadState(){
+  resetState();
+  try{
+    const raw = localStorage.getItem(dataKey(currentUser));
+    if(raw){ const s=JSON.parse(raw);
+      state.lang=s.lang||"python"; state.level=s.level||"beginner";
+      state.currentByLang=Object.assign(state.currentByLang, s.currentByLang||{});
+      state.completed=new Set(s.completed||[]); state.xp=s.xp||0; state.combo=s.combo||0;
+      state.userCode=s.userCode||{};
+    }
+  }catch(e){}
+}
+function saveState(){
+  if(!currentUser) return;
+  try{ localStorage.setItem(dataKey(currentUser), JSON.stringify({
+    lang:state.lang, level:state.level, currentByLang:state.currentByLang,
+    completed:[...state.completed], xp:state.xp, combo:state.combo, userCode:state.userCode
+  })); }catch(e){}
+}
+
+/* helpers */
+const $ = id => document.getElementById(id);
+let editor, _pvTimer;
+function curCourse(){ return COURSES[state.lang]; }
+function curLessons(){ return curCourse().lessons; }
+function curIdx(){ return state.currentByLang[state.lang]; }
+function setIdx(i){ state.currentByLang[state.lang]=i; }
+function key(i){ return state.lang+":"+i; }
+function runner(){ return curCourse().runner; }
+function usesPreview(){ return runner()==="html"||runner()==="css"; }
+function levelLessons(){ return curLessons().map((L,i)=>({L,i})).filter(x=>x.L.level===state.level); }
+
+/* =========================================================================
+   PROFILE UI
+   ========================================================================= */
+function renderProfileList(){
+  const list=$("profileList"); list.innerHTML="";
+  const profs=getProfiles();
+  profs.forEach(u=>{
+    const btn=document.createElement("button");
+    btn.innerHTML=`<span class="av">${u[0].toUpperCase()}</span>${u} <span class="x" title="Delete">✕</span>`;
+    btn.onclick=(e)=>{ if(e.target.classList.contains("x")){ e.stopPropagation(); deleteProfile(u); } else signIn(u); };
+    list.appendChild(btn);
+  });
+  $("signedHint").textContent = currentUser ? ("Signed in as "+currentUser) : (profs.length?"":"No profiles yet — create one below.");
+  $("closeOverlay").style.display = currentUser ? "inline" : "none";
+}
+function deleteProfile(u){
+  if(!confirm(`Delete profile "${u}" and its progress?`)) return;
+  setProfiles(getProfiles().filter(x=>x!==u));
+  try{ localStorage.removeItem(dataKey(u)); }catch(e){}
+  if(currentUser===u){ currentUser=null; try{localStorage.removeItem(LS_CURRENT);}catch(e){} }
+  renderProfileList();
+}
+function signIn(u){
+  u=(u||"").trim(); if(!u) return;
+  const profs=getProfiles(); if(!profs.includes(u)){ profs.push(u); setProfiles(profs); }
+  currentUser=u; try{ localStorage.setItem(LS_CURRENT,u); }catch(e){}
+  loadState();
+  $("overlay").classList.remove("show");
+  $("chipName").textContent=u; $("avatar").textContent=u[0].toUpperCase();
+  buildLangSwitch(); syncLevelTabs(); $("courseTitle").textContent=courseTitleText();
+  buildTree(); renderLesson();
+}
+function showOverlay(){ renderProfileList(); $("newName").value=""; $("overlay").classList.add("show"); setTimeout(()=>$("newName").focus(),50); }
+$("profileChip").onclick=showOverlay;
+$("newGo").onclick=()=>signIn($("newName").value);
+$("newName").addEventListener("keydown",e=>{ if(e.key==="Enter") signIn($("newName").value); });
+$("closeOverlay").onclick=()=>{ if(currentUser) $("overlay").classList.remove("show"); };
+
+/* =========================================================================
+   SIDEBAR
+   ========================================================================= */
+function courseTitleText(){ return curCourse().name + (state.level==="beginner"?" Basics":state.level==="intermediate"?" — Intermediate":" — Advanced"); }
+function buildLangSwitch(){
+  const c=$("langSwitch"); c.innerHTML="";
+  LANG_ORDER.forEach(lang=>{
+    const b=document.createElement("button"); b.dataset.lang=lang;
+    b.innerHTML=`<span>${COURSES[lang].icon}</span>${COURSES[lang].name}`;
+    b.classList.toggle("active", lang===state.lang);
+    b.onclick=()=>{ switchLang(lang); closeNav(); };
+    c.appendChild(b);
+  });
+}
+function syncLevelTabs(){ document.querySelectorAll("#levelSwitch button").forEach(b=>b.classList.toggle("active", b.dataset.level===state.level)); }
+function buildTree(){
+  const tree=$("tree"); tree.innerHTML="";
+  const items=levelLessons();
+  if(!items.length){ tree.innerHTML=`<div style="padding:18px;color:var(--faint);font-size:13px">More ${state.level} lessons coming soon in this language.</div>`; return; }
+  let lastSec=null, secNum=0;
+  items.forEach(({L,i})=>{
+    if(L.sec!==lastSec){ lastSec=L.sec; secNum++;
+      const s=document.createElement("div"); s.className="sec";
+      s.innerHTML=`<div class="sec-name"><span class="n">${secNum}</span>${L.sec}</div>`; tree.appendChild(s); }
+    const row=document.createElement("div");
+    row.className="lrow"+(i===curIdx()?" active":"")+(state.completed.has(key(i))?" done":"");
+    row.dataset.i=i; row.innerHTML=`<span class="dot"></span><span class="t">${L.title}</span>`;
+    row.onclick=()=>{ goToFlat(i); closeNav(); };
+    tree.lastChild.appendChild(row);
+  });
+}
+function refreshProgress(){
+  const items=levelLessons(); let done=0; items.forEach(({i})=>{ if(state.completed.has(key(i))) done++; });
+  $("progFill").style.width=(items.length?done/items.length*100:0)+"%";
+  $("doneCount").textContent=done; $("totalCount").textContent=items.length;
+  $("xp").textContent=state.xp; $("combo").textContent=state.combo;
+  document.querySelectorAll(".lrow").forEach(r=>{ const i=+r.dataset.i;
+    r.classList.toggle("done", state.completed.has(key(i))); r.classList.toggle("active", i===curIdx()); });
+}
+
+/* =========================================================================
+   RENDER LESSON
+   ========================================================================= */
+function modeFor(r){ return r==="py"?"python":r==="js"?"javascript":r==="css"?"css":{name:"xml",htmlMode:true}; }
+function renderLesson(){
+  const items=levelLessons();
+  if(items.length && !items.some(x=>x.i===curIdx())) setIdx(items[0].i); // jump into level
+  const L=curLessons()[curIdx()];
+  if(!L){ return; }
+  $("metaIdx").textContent="Lesson "+(items.findIndex(x=>x.i===curIdx())+1);
+  $("metaSec").textContent=L.sec;
+  const pill=$("lvlPill"); pill.textContent=L.level; pill.className="lvl-pill lvl-"+L.level;
+  $("lessonTitle").textContent=L.title;
+  $("concept").innerHTML=L.concept; $("task").innerHTML=L.task;
+  $("solution").textContent=L.solution; $("solBox").open=false;
+
+  editor.setOption("mode", modeFor(runner()));
+  const saved=state.userCode[key(curIdx())];
+  editor.setValue(saved!==undefined?saved:L.starter); editor.clearHistory();
+  setTimeout(()=>editor.refresh(),0);
+
+  $("fileName").textContent=curCourse().file;
+  const live=usesPreview();
+  $("panelLabel").textContent=live?"Live preview":"Console";
+  $("liveTag").style.display=live?"inline":"none";
+  $("runBtn").innerHTML=live?"✓ Check":"▸ Run";
+  $("console").style.display=live?"none":"block";
+  $("preview").style.display=live?"flex":"none";
+  $("frame").setAttribute("sandbox", runner()==="css"?"allow-same-origin":"");
+  clearPanel();
+  if(live) updatePreview();
+
+  $("aiOut").className="ai-out"; $("aiOut").innerHTML=""; $("aiInput").value="";
+  $("prevBtn").disabled = items.length && items[0].i===curIdx();
+  const next=$("nextBtn"), last=items.length && items[items.length-1].i===curIdx();
+  next.textContent=last?"Level done 🎉":"Next →";
+  next.classList.toggle("ready", state.completed.has(key(curIdx())));
+  $("lessonScroll").scrollTop=0;
+  refreshProgress(); saveState();
+}
+function goToFlat(i){ if(editor) state.userCode[key(curIdx())]=editor.getValue(); setIdx(i); renderLesson(); }
+function moveLevelRel(dir){
+  const items=levelLessons(); const pos=items.findIndex(x=>x.i===curIdx());
+  const np=pos+dir; if(np<0||np>=items.length) return; goToFlat(items[np].i);
+}
+function switchLang(lang){
+  if(editor) state.userCode[key(curIdx())]=editor.getValue();
+  state.lang=lang;
+  const L=curLessons()[curIdx()]; if(L) state.level=L.level;
+  buildLangSwitch(); syncLevelTabs(); $("courseTitle").textContent=courseTitleText();
+  buildTree(); renderLesson();
+}
+function setLevel(lvl){
+  if(editor) state.userCode[key(curIdx())]=editor.getValue();
+  state.level=lvl; syncLevelTabs();
+  const items=levelLessons(); if(items.length) setIdx(items[0].i);
+  $("courseTitle").textContent=courseTitleText(); buildTree(); renderLesson();
+}
+
+/* =========================================================================
+   PANELS / OUTPUT
+   ========================================================================= */
+function clearPanel(){ const b=$("checkBadge"); b.className="check-badge"; b.textContent="";
+  if(usesPreview()) $("htmlFeedback").classList.remove("show");
+  else $("console").innerHTML=`<span class="muted">▸ Run your code to see the output here.</span>`; }
+function logLine(t,cls){ const c=$("console"); if(c.querySelector(".muted")) c.innerHTML="";
+  const s=document.createElement("span"); if(cls)s.className=cls; s.textContent=t+"\n"; c.appendChild(s); c.scrollTop=c.scrollHeight; }
+function setBadge(p,t){ const b=$("checkBadge"); b.className="check-badge "+(p?"pass":"fail"); b.textContent=t; }
+function normalize(s){ return (s||"").replace(/\r/g,"").split("\n").map(l=>l.replace(/\s+$/,"")).join("\n").replace(/\n+$/,"").replace(/^\n+/,""); }
+function compact(s){ return (s||"").replace(/\s+/g,""); } // for array-style comparisons
+
+/* live preview (html/css) */
+function previewDocHTML(html){ return `<!doctype html><html><head><meta charset="utf-8"><style>
+ body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#1a1f29;background:#fff;margin:0;padding:20px;line-height:1.55}
+ h1{font-size:1.9em;margin:.2em 0}h2{font-size:1.4em;margin:.3em 0}a{color:#2563eb}img{max-width:100%}
+ table{border-collapse:collapse}td{border:1px solid #cbd2dc;padding:6px 10px}
+ .card{border:1px solid #e2e6ec;border-radius:12px;padding:18px;max-width:340px;box-shadow:0 6px 18px -10px rgba(0,0,0,.25)}
+ input,button{font:inherit;padding:7px 11px;border-radius:8px;border:1px solid #cbd2dc;margin:3px 4px 3px 0}
+ button{background:#1a1f29;color:#fff;border-color:#1a1f29;cursor:pointer}</style></head><body>${html}</body></html>`; }
+function previewDocCSS(css,scaffold){ return `<!doctype html><html><head><meta charset="utf-8"><style>
+ body{font-family:system-ui,-apple-system,sans-serif;color:#111;background:#fff;margin:0;padding:18px}
+ ${css}</style></head><body>${scaffold||""}</body></html>`; }
+function updatePreview(){ const L=curLessons()[curIdx()];
+  $("frame").srcdoc = runner()==="css" ? previewDocCSS(editor.getValue(), L.scaffold) : previewDocHTML(editor.getValue()); }
+function schedulePreview(){ clearTimeout(_pvTimer); _pvTimer=setTimeout(updatePreview,250); }
+
+/* HTML check */
+function checkHTML(){ const L=curLessons()[curIdx()]; state.userCode[key(curIdx())]=editor.getValue(); updatePreview();
+  let ok=false; try{ ok=!!L.check(new DOMParser().parseFromString(editor.getValue(),"text/html").body); }catch(e){ ok=false; }
+  finishCheck(ok,L); }
+/* CSS check (async — render then read computed styles) */
+function checkCSS(){ const L=curLessons()[curIdx()]; state.userCode[key(curIdx())]=editor.getValue();
+  const f=$("frame"); f.onload=()=>{ let ok=false; try{ ok=!!L.check(f.contentDocument, f.contentWindow); }catch(e){ ok=false; } finishCheck(ok,L); };
+  f.srcdoc=previewDocCSS(editor.getValue(), L.scaffold); }
+function finishCheck(ok,L){ const fb=$("htmlFeedback");
+  if(ok){ setBadge(true,"✓ Passed"); fb.classList.remove("show"); onPass(); }
+  else{ setBadge(false,"Not yet"); fb.textContent="Hint: "+L.failHint; fb.classList.add("show"); } }
+
+/* JavaScript run */
+function fmtJS(v){ if(typeof v==="string") return v; try{ return JSON.stringify(v); }catch(e){ return String(v); } }
+function runJSCapture(code){ const logs=[];
+  const c={ log:(...a)=>logs.push(a.map(fmtJS).join(" ")), error:(...a)=>logs.push(a.map(fmtJS).join(" ")),
+            warn:(...a)=>logs.push(a.map(fmtJS).join(" ")), info:(...a)=>logs.push(a.map(fmtJS).join(" ")) };
+  let err=null;
+  try{ new Function("console", code)(c); }
+  catch(e){ err=(e&&e.message)?(e.name+": "+e.message):String(e); }
+  return {out:logs.join("\n"), err}; }
+function runJS(){ const L=curLessons()[curIdx()]; state.userCode[key(curIdx())]=editor.getValue(); clearPanel();
+  const {out,err}=runJSCapture(editor.getValue()); $("console").innerHTML="";
+  if(err){ logLine(err,"err"); setBadge(false,"Error"); return; }
+  if(out.length) out.split("\n").forEach(l=>logLine(l)); else logLine("(no output)","muted");
+  let ok = L.expected===undefined ? true : (normalize(out)===normalize(L.expected) || compact(out)===compact(L.expected));
+  if(ok && L.mustInclude) ok = L.mustInclude.every(s=>editor.getValue().includes(s));
+  if(ok){ setBadge(true,"✓ Passed"); onPass(); }
+  else{ setBadge(false,"Not yet"); logLine("",null);
+    if(L.expected!==undefined && normalize(out)!==normalize(L.expected)){ logLine("Expected output:","want"); normalize(L.expected).split("\n").forEach(l=>logLine("  "+l,"want")); }
+    logLine("Hint: "+L.failHint,"sys"); } }
+
+/* Python run */
+let pyodide=null, pyLoading=null;
+const RUNNER=`
+import sys, io, traceback, json
+def __run(src, test):
+    buf=io.StringIO(); old=sys.stdout; sys.stdout=buf
+    ns={"__name__":"__main__"}; ue=None; te=None
+    try: exec(src, ns)
+    except Exception: ue=traceback.format_exc(limit=1)
+    if ue is None and test:
+        try: exec(test, ns)
+        except Exception: te="fail"
+    sys.stdout=old
+    return json.dumps({"out":buf.getvalue(),"ue":ue,"te":te})
+`;
+async function ensurePy(){ if(pyodide) return pyodide; if(pyLoading) return pyLoading;
+  logLine("Booting the Python engine — one-time, ~10s…","sys");
+  pyLoading=(async()=>{ if(!window.loadPyodide){ await new Promise((res,rej)=>{ const s=document.createElement("script");
+    s.src="https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js"; s.onload=res; s.onerror=()=>rej(new Error("load")); document.head.appendChild(s); }); }
+    pyodide=await loadPyodide({indexURL:"https://cdn.jsdelivr.net/pyodide/v0.26.4/full/"}); pyodide.runPython(RUNNER); return pyodide; })();
+  return pyLoading; }
+async function runPy(){ const L=curLessons()[curIdx()]; state.userCode[key(curIdx())]=editor.getValue();
+  const rb=$("runBtn"); rb.disabled=true; clearPanel();
+  let py; try{ py=await ensurePy(); }catch(e){ logLine("Couldn't load the Python engine — check your connection and try again.","err"); rb.disabled=false; return; }
+  let res; try{ py.globals.set("__src",editor.getValue()); py.globals.set("__test",L.test||""); res=JSON.parse(py.runPython("__run(__src, __test)")); }
+  catch(e){ logLine("Internal error.","err"); rb.disabled=false; return; }
+  $("console").innerHTML=""; rb.disabled=false;
+  if(res.ue){ res.ue.trim().split("\n").forEach(l=>logLine(l,"err")); setBadge(false,"Error"); return; }
+  const out=res.out; if(out.length) out.replace(/\n$/,"").split("\n").forEach(l=>logLine(l)); else logLine("(no output)","muted");
+  const ok=(L.expected===undefined?true:normalize(out)===normalize(L.expected)) && !res.te;
+  if(ok){ setBadge(true,"✓ Passed"); onPass(); }
+  else{ setBadge(false,"Not yet"); logLine("",null);
+    if(L.expected!==undefined && normalize(out)!==normalize(L.expected)){ logLine("Expected output:","want"); normalize(L.expected).split("\n").forEach(l=>logLine("  "+l,"want")); }
+    logLine("Hint: "+L.failHint,"sys"); } }
+
+function runAndCheck(){ const r=runner(); if(r==="py") return runPy(); if(r==="js") return runJS(); if(r==="html") return checkHTML(); if(r==="css") return checkCSS(); }
+
+/* pass / progress */
+function onPass(){ const k=key(curIdx()); const first=!state.completed.has(k); state.completed.add(k);
+  if(first){ state.xp+=20; state.combo+=1; showToast(`Passed! +20 XP · 🔥 ${state.combo} combo`); } else showToast("Passed! ✓");
+  $("nextBtn").classList.add("ready"); refreshProgress(); saveState(); }
+$("solBox").addEventListener("toggle",function(){ if(this.open && state.combo>0){ state.combo=0; refreshProgress(); saveState(); } });
+function showToast(m){ const t=$("toast"); t.textContent=m; t.classList.add("show"); clearTimeout(showToast._t); showToast._t=setTimeout(()=>t.classList.remove("show"),2400); }
+
+/* AI tutor */
+async function callClaude(content){ const ep=AI_PROXY_URL||"https://api.anthropic.com/v1/messages";
+  const res=await fetch(ep,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
+    model:"claude-sonnet-4-20250514",max_tokens:1000,
+    system:"You are Codeloop's built-in tutor for someone learning to code (Python, JavaScript, HTML, or CSS). Warm, brief, encouraging, plain language, tiny snippets only. Never write the full solution — nudge toward it. Under 90 words.",
+    messages:[{role:"user",content}]})});
+  if(!res.ok) throw new Error("api "+res.status); const d=await res.json();
+  return (d.content||[]).map(b=>b.type==="text"?b.text:"").join("\n").trim(); }
+function aiThinking(){ const o=$("aiOut"); o.className="ai-out show"; o.innerHTML=`<span class="ai-thinking"><i></i><i></i><i></i> thinking…</span>`; }
+function aiShow(t,tip){ const o=$("aiOut"); o.className="ai-out show"+(tip?" tip":""); o.textContent=t; }
+function aiErr(){ aiShow("The AI tutor couldn't be reached. The built-in hints still work — try the check, or come back in a moment.",false); }
+function ctx(){ const L=curLessons()[curIdx()]; const lang=curCourse().name;
+  return `Language: ${lang}\nLesson: "${L.title}"\nGoal: ${L.task.replace(/<[^>]+>/g,"")}\n\nStudent's code:\n\`\`\`\n${editor.getValue()}\n\`\`\``; }
+$("hintBtn").onclick=async()=>{ aiThinking(); try{ aiShow(await callClaude(ctx()+`\n\nGive ONE short hint (2-3 sentences) nudging them forward. Don't give the full answer.`),true); }catch(e){ aiErr(); } };
+$("explainBtn").onclick=async()=>{ const L=curLessons()[curIdx()]; aiThinking(); try{ aiShow(await callClaude(`Explain the idea in "${L.title}" to a beginner in 3-4 short sentences with one tiny example. Concept: ${L.concept.replace(/<[^>]+>/g," ").replace(/\s+/g," ").trim().slice(0,520)}`),false); }catch(e){ aiErr(); } };
+async function askAI(){ const q=$("aiInput").value.trim(); if(!q) return; $("aiInput").value=""; aiThinking();
+  try{ aiShow(await callClaude(ctx()+`\n\nThe student asks: "${q}"\nAnswer briefly; guide rather than pasting the full solution.`),false); }catch(e){ aiErr(); } }
+$("askBtn").onclick=askAI; $("aiInput").addEventListener("keydown",e=>{ if(e.key==="Enter") askAI(); });
+
+/* wiring */
+$("runBtn").onclick=runAndCheck;
+$("resetBtn").onclick=()=>{ editor.setValue(curLessons()[curIdx()].starter); clearPanel(); if(usesPreview()) updatePreview(); editor.focus(); };
+$("prevBtn").onclick=()=>moveLevelRel(-1);
+$("nextBtn").onclick=()=>{ const items=levelLessons(); if(items.length && items[items.length-1].i!==curIdx()) moveLevelRel(1); else showToast("🎉 Level complete!"); };
+document.querySelectorAll("#levelSwitch button").forEach(b=>b.onclick=()=>{ setLevel(b.dataset.level); closeNav(); });
+function openNav(){ $("sidebar").classList.add("open"); $("scrim").classList.add("show"); }
+function closeNav(){ $("sidebar").classList.remove("open"); $("scrim").classList.remove("show"); }
+$("navToggle").onclick=()=> $("sidebar").classList.contains("open")?closeNav():openNav();
+$("scrim").onclick=closeNav;
+document.addEventListener("keydown",e=>{ if((e.ctrlKey||e.metaKey)&&e.key==="Enter"){ e.preventDefault(); runAndCheck(); } });
+
+/* boot */
+(function init(){
+  editor=CodeMirror.fromTextArea($("code"),{ mode:"python", theme:"material-darker", lineNumbers:true,
+    indentUnit:2, tabSize:2, indentWithTabs:false, lineWrapping:true, extraKeys:{ "Tab":cm=>cm.replaceSelection("  ") } });
+  editor.on("change",()=>{ if(usesPreview()) schedulePreview(); });
+  resetState(); buildLangSwitch(); syncLevelTabs();
+  let saved=null; try{ saved=localStorage.getItem(LS_CURRENT); }catch(e){}
+  const profs=getProfiles();
+  if(saved && profs.includes(saved)){ signIn(saved); }
+  else{ $("courseTitle").textContent=courseTitleText(); buildTree(); renderLesson(); showOverlay(); }
+})();
+</script>
+</body>
+</html>
